@@ -1,11 +1,23 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
 from local_attendance.api import attendance, auth, dashboard, employees
+from local_attendance.config import DEFAULT_JWT_SECRET, get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
+    if get_settings().jwt_secret == DEFAULT_JWT_SECRET:
+        logger.warning(
+            "LOCAL_ATTENDANCE_JWT_SECRET is not set; using the default development secret "
+            "committed in source control. Tokens signed with it can be forged by anyone who "
+            "has read the repository. Set a real secret in .env before real deployment."
+        )
+
     app = FastAPI(
         title="Local Attendance Core API",
         version="0.1.0",

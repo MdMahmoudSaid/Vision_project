@@ -1,4 +1,5 @@
 import json
+import threading
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -32,6 +33,15 @@ class VerificationOutcome:
     attempt: VerificationAttempt | None
     attendance_event: AttendanceEvent | None
     message: str
+
+
+# FastAPI runs sync path operations in a thread pool, so two concurrent
+# POST /attendance/verify calls for the same employee/type (double-tap, client
+# retry) could both read "no recent duplicate" before either commits, creating
+# two attendance events. This local-PC service is a single process, so a
+# simple in-process lock around the check-then-write section is sufficient to
+# make it atomic without needing SQLite-level locking gymnastics.
+_duplicate_check_lock = threading.Lock()
 
 
 def _latest_usable_reference(db: Session, employee_id: str) -> FacialReference | None:
@@ -124,33 +134,34 @@ def verify_attendance(
         )
         return VerificationOutcome("failed", attempt, None, "Face verification failed")
 
-    now = utcnow()
-    duplicate_window = get_duplicate_window_seconds(db)
-    duplicate_event = find_recent_duplicate_event(db, employee.id, type_requested, duplicate_window, now)
+    with _duplicate_check_lock:
+        now = utcnow()
+        duplicate_window = get_duplicate_window_seconds(db)
+        duplicate_event = find_recent_duplicate_event(db, employee.id, type_requested, duplicate_window, now)
 
-    if duplicate_event is not None:
+        if duplicate_event is not None:
+            attempt = _record_attempt(
+                db,
+                employee,
+                guard,
+                type_requested,
+                VerificationResult.DUPLICATE_BLOCKED,
+                similarity_score=comparison.similarity_score,
+                failure_reason="duplicate_recent_attendance",
+            )
+            return VerificationOutcome(
+                "duplicate_blocked", attempt, None, "Recent attendance was already recorded for this employee"
+            )
+
         attempt = _record_attempt(
             db,
             employee,
             guard,
             type_requested,
-            VerificationResult.DUPLICATE_BLOCKED,
+            VerificationResult.SUCCESS,
             similarity_score=comparison.similarity_score,
-            failure_reason="duplicate_recent_attendance",
-        )
-        return VerificationOutcome(
-            "duplicate_blocked", attempt, None, "Recent attendance was already recorded for this employee"
         )
 
-    attempt = _record_attempt(
-        db,
-        employee,
-        guard,
-        type_requested,
-        VerificationResult.SUCCESS,
-        similarity_score=comparison.similarity_score,
-    )
-
-    event = create_attendance_event(db, employee=employee, guard=guard, type_=type_requested, attempt=attempt)
+        event = create_attendance_event(db, employee=employee, guard=guard, type_=type_requested, attempt=attempt)
 
     return VerificationOutcome("success", attempt, event, "Attendance recorded")
