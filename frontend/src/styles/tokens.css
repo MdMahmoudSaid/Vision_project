@@ -1,0 +1,968 @@
+/* ============================================================
+   Pointage — Checkpoint Console design system
+   Self-hosted fonts (works fully offline, no CDN dependency):
+   IBM Plex Sans for display/body, IBM Plex Mono for badge
+   numbers and timestamps — a systems/access-control heritage
+   that fits a physical security checkpoint tool.
+   ============================================================ */
+
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+/* Theme-independent tokens: type scale, spacing, radius. Color lives in the
+   [data-theme] blocks below so the same class names re-theme automatically. */
+:root {
+  --font-display: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+
+  --spacing-xs: 0.375rem;
+  --spacing-sm: 0.625rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2.5rem;
+  --spacing-2xl: 4rem;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+}
+
+/* Dark theme (default): the original checkpoint-console look. */
+:root,
+[data-theme='dark'] {
+  --ink: #12151c;
+  --surface: #1b212b;
+  --surface-2: #242c38;
+  --surface-3: #2d3543;
+  --line: #303a49;
+  --line-soft: #262e3a;
+
+  --text: #f3f5f8;
+  --text-muted: #8b93a3;
+  --text-faint: #5c6577;
+
+  --accent: #8b5cf6;
+  --accent-hover: #7a45f2;
+  --accent-soft: rgba(139, 92, 246, 0.16);
+
+  --go: #2fd98a;
+  --go-soft: rgba(47, 217, 138, 0.14);
+  --caution: #ffc24b;
+  --caution-soft: rgba(255, 194, 75, 0.14);
+  --stop: #ff5c5c;
+  --stop-soft: rgba(255, 92, 92, 0.14);
+  --stop-line: rgba(255, 92, 92, 0.35);
+  --offline: #5aa9ff;
+  --offline-soft: rgba(90, 169, 255, 0.14);
+
+  /* Text placed on a solid --stop fill (e.g. the danger button): dark
+     mode's stop red is bright, so dark text reads best on it. */
+  --on-stop: #12151c;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(139, 92, 246, 0.45);
+
+  color-scheme: dark;
+
+  /* Legacy aliases kept so any un-migrated inline style referencing the old
+     token names still resolves to something reasonable. */
+  --color-primary: var(--accent);
+  --color-primary-hover: var(--accent-hover);
+  --color-secondary: var(--surface-2);
+  --color-secondary-hover: var(--surface-3);
+  --color-danger: var(--stop);
+  --color-danger-hover: #e64545;
+  --color-text: var(--text);
+  --color-text-light: var(--text-muted);
+  --color-bg: var(--ink);
+  --color-white: var(--text);
+}
+
+/* Light theme: same system and same signature (badges, gate-light results,
+   signal colors), rebuilt for a bright surface rather than inverted. */
+[data-theme='light'] {
+  --ink: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --surface-3: #e2e7ef;
+  --line: #d7dee8;
+  --line-soft: #e6eaf1;
+
+  --text: #12151c;
+  --text-muted: #5c6577;
+  --text-faint: #98a2b3;
+
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: rgba(124, 58, 237, 0.1);
+
+  --go: #16a34a;
+  --go-soft: rgba(22, 163, 74, 0.1);
+  --caution: #b45309;
+  --caution-soft: rgba(180, 83, 9, 0.1);
+  --stop: #dc2626;
+  --stop-soft: rgba(220, 38, 38, 0.1);
+  --stop-line: rgba(220, 38, 38, 0.3);
+  --offline: #2563eb;
+  --offline-soft: rgba(37, 99, 235, 0.1);
+
+  /* Light mode's stop red is deep enough that light text reads best on it. */
+  --on-stop: #ffffff;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(124, 58, 237, 0.35);
+
+  color-scheme: light;
+
+  --color-primary: var(--accent);
+  --color-primary-hover: var(--accent-hover);
+  --color-secondary: var(--surface-2);
+  --color-secondary-hover: var(--surface-3);
+  --color-danger: var(--stop);
+  --color-danger-hover: #b91c1c;
+  --color-text: var(--text);
+  --color-text-light: var(--text-muted);
+  --color-bg: var(--ink);
+  --color-white: var(--surface);
+}
+
+/* ============================================================
+   Reset & base
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--ink);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--text);
+}
+
+button, input {
+  font-family: inherit;
+}
+
+a {
+  color: var(--accent);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   Layout primitives
+   ============================================================ */
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-2xl);
+}
+
+.page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--spacing-sm);
+}
+
+.page-title {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-subtitle {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.field label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.field input {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 0.875rem 1rem;
+  font-size: var(--text-lg);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.field input::placeholder {
+  color: var(--text-faint);
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+/* ============================================================
+   Buttons — console keypad, not soft consumer pills
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-base);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-large {
+  padding: 1.125rem 1.5rem;
+  font-size: var(--text-lg);
+}
+
+.btn-medium {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--text-base);
+  width: auto;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:not(:disabled):hover { background: var(--accent-hover); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+.btn-secondary:not(:disabled):hover { background: var(--surface-2); border-color: var(--text-faint); }
+
+.btn-danger {
+  background: var(--stop);
+  color: var(--on-stop);
+}
+.btn-danger:not(:disabled):hover { filter: brightness(1.08); }
+
+.btn-outline-accent {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.btn-outline-accent:not(:disabled):hover { background: var(--accent-soft); }
+
+/* Attendance hero: the currently-selected employee, shown badge-style */
+.attendance-subject {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.attendance-subject-mark {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+}
+
+.attendance-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem;
+  font-size: var(--text-xl);
+}
+
+.action-icon {
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+/* ============================================================
+   Camera preview — circular live-ish frame shown while verifying
+   ============================================================ */
+
+.camera-preview {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto var(--spacing-xl);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-preview-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  opacity: 0.6;
+  animation: camera-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes camera-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-preview-ring {
+    animation: none;
+  }
+}
+
+.camera-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-preview-placeholder {
+  font-size: 2.5rem;
+  color: var(--text-faint);
+}
+
+/* Scanning sweep — a light band that travels up and down the circle while
+   the preview is active, suggesting the system is actively searching for a
+   face (rather than just showing a static camera feed). */
+.camera-preview-scanner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 26%;
+  top: -26%;
+  background: linear-gradient(to bottom, transparent, var(--accent) 50%, transparent);
+  opacity: 0.7;
+  animation: camera-scan 2.2s ease-in-out infinite;
+}
+
+@keyframes camera-scan {
+  0% { top: -26%; }
+  50% { top: 100%; }
+  100% { top: -26%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-preview-scanner {
+    animation: none;
+    display: none;
+  }
+}
+
+/* ============================================================
+   Badge chip — the ID-badge motif used for every employee row
+   ============================================================ */
+
+.badge-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.08s ease;
+}
+
+.badge-chip:hover {
+  background: var(--surface-2);
+  border-left-color: var(--accent-hover);
+}
+
+.badge-chip:active {
+  transform: scale(0.99);
+}
+
+.badge-chip.is-inactive {
+  border-left-color: var(--text-faint);
+  opacity: 0.6;
+}
+
+.badge-chip-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.badge-chip-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.badge-chip-name {
+  font-weight: 600;
+  font-size: var(--text-lg);
+  color: var(--text);
+}
+
+.badge-chip-meta {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* Admin employee list row: same visual family as badge-chip, but a plain
+   container (not a button) since it holds its own action buttons. */
+.admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.admin-row-error {
+  flex-basis: 100%;
+}
+
+.admin-row.is-inactive {
+  opacity: 0.6;
+}
+
+.admin-row-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.row-btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.row-btn:hover {
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+.row-btn-danger {
+  color: var(--stop);
+  border-color: var(--stop-line);
+}
+
+.row-btn-danger:hover {
+  background: var(--stop-soft);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ============================================================
+   Gate result — the signature moment. Verification outcomes
+   take over the whole content surface, like a real access-
+   control gate light changing color, instead of a small toast.
+   ============================================================ */
+
+.gate-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--spacing-lg);
+  min-height: 55vh;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  border-top: 6px solid var(--line);
+  background: var(--surface);
+  animation: gate-in 0.22s ease-out;
+}
+
+@keyframes gate-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gate-result-icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.gate-result-title {
+  font-size: var(--text-3xl);
+}
+
+.gate-result-message {
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+  max-width: 32ch;
+}
+
+.gate-result-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  width: 100%;
+  max-width: 320px;
+}
+
+.gate-result--success { border-top-color: var(--go); background: linear-gradient(180deg, var(--go-soft), transparent 55%), var(--surface); }
+.gate-result--success .gate-result-icon,
+.gate-result--success .gate-result-title { color: var(--go); }
+
+.gate-result--failure { border-top-color: var(--stop); background: linear-gradient(180deg, var(--stop-soft), transparent 55%), var(--surface); }
+.gate-result--failure .gate-result-icon,
+.gate-result--failure .gate-result-title { color: var(--stop); }
+
+.gate-result--duplicate-blocked { border-top-color: var(--caution); background: linear-gradient(180deg, var(--caution-soft), transparent 55%), var(--surface); }
+.gate-result--duplicate-blocked .gate-result-icon,
+.gate-result--duplicate-blocked .gate-result-title { color: var(--caution); }
+
+.gate-result--connection-error { border-top-color: var(--offline); background: linear-gradient(180deg, var(--offline-soft), transparent 55%), var(--surface); }
+.gate-result--connection-error .gate-result-icon,
+.gate-result--connection-error .gate-result-title { color: var(--offline); }
+
+/* Compact status tag used in shift activity / log rows */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.status-tag::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-tag--success { background: var(--go-soft); color: var(--go); }
+.status-tag--failed { background: var(--stop-soft); color: var(--stop); }
+.status-tag--duplicate_blocked { background: var(--caution-soft); color: var(--caution); }
+
+/* ============================================================
+   App shell — console top bar
+   ============================================================ */
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--ink);
+}
+
+/* Two explicit rows rather than one flex row that tries to wrap everything:
+   row 1 is brand + user chip, row 2 is the nav strip. This stays legible at
+   phone widths instead of nav links wrapping awkwardly between the brand
+   and the logout button. */
+.topbar {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.topbar-mark {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  flex-shrink: 0;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--line-soft);
+  overflow-x: auto;
+}
+
+.topbar-nav a {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.topbar-nav a:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.topbar-nav a.is-active {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.user-chip-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.7rem;
+  white-space: nowrap;
+}
+
+.user-chip-id .role {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.logout-btn:hover {
+  color: var(--stop);
+  background: var(--stop-soft);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ============================================================
+   Login — access panel
+   ============================================================ */
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background:
+    radial-gradient(circle at 50% 0%, var(--accent-soft), transparent 60%),
+    var(--ink);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  border-top: 4px solid var(--accent);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  margin-bottom: 0.25rem;
+}
+
+.login-eyebrow {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: var(--spacing-xl);
+}
+
+.login-error {
+  font-size: var(--text-sm);
+  color: var(--stop);
+  background: var(--stop-soft);
+  border: 1px solid var(--stop-line);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+  text-align: center;
+}
+
+/* ============================================================
+   Search bar & empty state
+   ============================================================ */
+
+.search-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.search-bar input {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 0.875rem 1rem;
+  font-size: var(--text-lg);
+}
+
+.search-bar input:focus {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.search-bar input::placeholder {
+  color: var(--text-faint);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  color: var(--text-faint);
+  font-size: var(--text-lg);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+}
+
+/* ============================================================
+   Shift activity — checkpoint log
+   ============================================================ */
+
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  margin-bottom: var(--spacing-sm);
+}
+
+.log-row-time {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.log-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.log-row-name {
+  font-weight: 600;
+  font-size: var(--text-lg);
+}
+
+.log-row-meta {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   Access denied
+   ============================================================ */
+
+.forbidden-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  border: 1px solid var(--stop-line);
+  border-radius: var(--radius-lg);
+  background: var(--stop-soft);
+  color: var(--stop);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-lg);
+}

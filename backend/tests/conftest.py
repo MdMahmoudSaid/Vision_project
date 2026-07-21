@@ -50,6 +50,9 @@ class FakeCamera(CameraBase):
             raise CameraCaptureError("camera unusable")
         return self.frame
 
+    def encode_jpeg(self, frame: CapturedFrame) -> bytes:
+        return b"fake-jpeg-bytes"
+
 
 class FakeFaceEngine(FaceEngineBase):
     def __init__(self) -> None:

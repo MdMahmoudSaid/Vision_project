@@ -120,6 +120,29 @@ def update_employee(
     return _to_detail(db, employee)
 
 
+@router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_employee(
+    employee_id: str,
+    db: Session = Depends(get_db),
+    _: LocalUser = Depends(require_admin),
+) -> None:
+    try:
+        employee_service.delete_employee(db, employee_id)
+    except employee_service.EmployeeNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "employee_not_found", "message": str(exc)},
+        ) from exc
+    except employee_service.EmployeeHasHistoryError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "employee_has_history",
+                "message": "This employee has attendance history and cannot be deleted. Deactivate them instead.",
+            },
+        ) from exc
+
+
 @router.post("/{employee_id}/face", response_model=FaceEnrollmentResponse)
 def enroll_employee_face(
     employee_id: str,

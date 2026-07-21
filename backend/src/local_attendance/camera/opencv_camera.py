@@ -34,3 +34,11 @@ class OpenCvCamera(CameraBase):
             return CapturedFrame(image=frame)
         finally:
             capture.release()
+
+    def encode_jpeg(self, frame: CapturedFrame) -> bytes:
+        import cv2
+
+        ok, buffer = cv2.imencode(".jpg", frame.image)
+        if not ok:
+            raise CameraCaptureError("Unable to encode captured frame as JPEG")
+        return buffer.tobytes()

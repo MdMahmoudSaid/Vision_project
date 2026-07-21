@@ -1,7 +1,9 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from local_attendance.models.attendance_event import AttendanceEvent
 from local_attendance.models.employee import Employee
+from local_attendance.models.verification_attempt import VerificationAttempt
 from local_attendance.schemas.employee import EmployeeCreate, EmployeeUpdate
 
 
@@ -14,6 +16,15 @@ class DuplicateEmployeeNumberError(Exception):
 
 
 class InvalidEmployeeDataError(Exception):
+    pass
+
+
+class EmployeeHasHistoryError(Exception):
+    """Raised when deleting an employee would destroy attendance/verification
+    history. The constitution requires that history be permanent and
+    auditable, so this is refused rather than silently cascading — the
+    caller should deactivate the employee instead."""
+
     pass
 
 
@@ -85,6 +96,24 @@ def update_employee(db: Session, employee_id: str, payload: EmployeeUpdate) -> E
     db.commit()
     db.refresh(employee)
     return employee
+
+
+def delete_employee(db: Session, employee_id: str) -> None:
+    employee = get_employee(db, employee_id)
+
+    has_history = db.scalar(
+        select(VerificationAttempt.id).where(VerificationAttempt.employee_id == employee_id)
+    ) is not None or db.scalar(
+        select(AttendanceEvent.id).where(AttendanceEvent.employee_id == employee_id)
+    ) is not None
+
+    if has_history:
+        raise EmployeeHasHistoryError(
+            f"Employee {employee_id} has attendance or verification history and cannot be deleted"
+        )
+
+    db.delete(employee)
+    db.commit()
 
 
 def search_employees(

@@ -117,6 +117,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete an employee with no attendance history
+      description: >
+        Requires local admin role. Refused with 409 if the employee has any
+        verification attempts or attendance events, since that history must
+        remain permanent and auditable — deactivate the employee instead
+        (PATCH active=false) rather than deleting them.
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+      responses:
+        '204':
+          description: Employee deleted
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Employee has attendance or verification history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /employees/{employee_id}/face:
     post:
       summary: Enroll or re-enroll an employee facial reference
@@ -167,6 +191,33 @@ paths:
                 $ref: '#/components/schemas/AttendanceVerifyResponse'
         '400':
           description: Invalid request, inactive employee, unusable camera capture, or missing face reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: User does not have permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /attendance/camera-preview:
+    get:
+      summary: Single-frame JPEG snapshot from the fixed camera
+      description: >
+        Display-only preview so the guard's UI can confirm the camera sees a
+        usable face before verification. Never used for face comparison and
+        never persisted; a fresh frame is captured on every call.
+      responses:
+        '200':
+          description: JPEG image of the current camera frame
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Camera could not capture a usable frame
           content:
             application/json:
               schema:

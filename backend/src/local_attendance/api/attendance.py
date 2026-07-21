@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from local_attendance.auth.dependencies import require_guard_or_admin
-from local_attendance.camera.base import CameraBase, get_camera
+from local_attendance.camera.base import CameraBase, CameraCaptureError, get_camera
 from local_attendance.database import get_db
 from local_attendance.face.engine import FaceEngineBase, get_face_engine
 from local_attendance.models.user import LocalUser
@@ -55,6 +55,27 @@ def verify(
             AttendanceEventSchema.model_validate(outcome.attendance_event) if outcome.attendance_event else None
         ),
     )
+
+
+@router.get("/camera-preview")
+def camera_preview(
+    camera: CameraBase = Depends(get_camera),
+    _: LocalUser = Depends(require_guard_or_admin),
+) -> Response:
+    """Single-frame JPEG snapshot from the fixed camera, for the guard's UI to
+    confirm framing before verification. Display-only: never used for face
+    comparison and never persisted to disk (same source frame semantics as
+    the real verification capture).
+    """
+    try:
+        frame = camera.capture_frame()
+        jpeg_bytes = camera.encode_jpeg(frame)
+    except CameraCaptureError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "capture_unusable", "message": "Camera could not capture a usable frame"},
+        ) from exc
+    return Response(content=jpeg_bytes, media_type="image/jpeg")
 
 
 @router.get("/shift-activity", response_model=list[ShiftActivityItem])

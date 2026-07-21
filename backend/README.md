@@ -10,22 +10,39 @@ integration are out of scope here; see
 
 ## Setup
 
+**Requires Python 3.11.x specifically** (see `.python-version`). `deepface`
+depends on TensorFlow, which does not yet support Python 3.12+; on newer
+Python you'll hit a confusing `pip` dependency-resolution error, not a clear
+"wrong Python version" message. Run `python3.11 --version` to confirm it's
+installed (`brew install python@3.11` on macOS) before creating the venv.
+
 ```bash
 cd backend
-python -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env   # adjust values, especially LOCAL_ATTENDANCE_JWT_SECRET
 alembic upgrade head
+python scripts/create_local_user.py --username admin --password <choose-one> --role admin
+python scripts/create_local_user.py --username guard --password <choose-one> --role guard
 uvicorn local_attendance.main:app --reload
 ```
 
+There is no `POST /auth/register` endpoint by design (see
+`contracts/local-api.yaml` and the constitution's local Admin/Guard account
+scope) — accounts are provisioned locally via `scripts/create_local_user.py`,
+not over the network. Without running it at least once, `POST /auth/login`
+has no account to authenticate against.
+
 The API is served at `http://localhost:8000` and matches
-`specs/001-local-attendance-core/contracts/local-api.yaml`.
+`specs/001-local-attendance-core/contracts/local-api.yaml`. Open
+`http://localhost:8000/docs` for interactive Swagger UI.
 
 `opencv-python` and `deepface` are required for real camera capture and face
 recognition in production. They are declared in `pyproject.toml` but are not
-needed to run the automated test suite (see below).
+needed to run the automated test suite (see below). The first real face
+detection/enrollment call downloads ~120MB of model weights from GitHub to
+`~/.deepface/weights/` — needs internet access once, then works offline.
 
 ## Migrations
 

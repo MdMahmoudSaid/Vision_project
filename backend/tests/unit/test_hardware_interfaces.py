@@ -14,6 +14,9 @@ class FakeCamera(CameraBase):
             raise CameraCaptureError("no usable frame")
         return self._frame
 
+    def encode_jpeg(self, frame: CapturedFrame) -> bytes:
+        return b"fake-jpeg-bytes"
+
 
 class FakeFaceEngine(FaceEngineBase):
     def __init__(self, is_match: bool = True, similarity: float = 0.9, usable: bool = True):
