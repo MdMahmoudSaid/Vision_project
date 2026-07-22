@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-type ResultType = 'success' | 'failure' | 'duplicate-blocked' | 'connection-error' | 'loading';
+type ResultType = 'success' | 'failure' | 'duplicate-blocked' | 'connection-error' | 'no-face' | 'loading';
 
 interface ResultBannerProps {
   type: ResultType;
@@ -15,6 +15,7 @@ const ICONS: Record<ResultType, string> = {
   failure: '✕',
   'duplicate-blocked': '⚠',
   'connection-error': '⌁',
+  'no-face': '⊙',
   loading: '…'
 };
 

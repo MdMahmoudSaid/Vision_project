@@ -6,6 +6,7 @@ import { CameraPreview } from '../components/CameraPreview';
 import { describeError, type ErrorDisplay } from '../api/client';
 import { useSession } from '../auth/SessionContext';
 import { usePreviewGate } from '../hooks/usePreviewGate';
+import { useElapsedWhile } from '../hooks/useElapsedWhile';
 import { useState } from 'react';
 
 // Same pacing as the attendance preview (AttendancePage) — enough time to
@@ -46,6 +47,7 @@ const FaceEnrollmentPage = () => {
     autoAdvanceMs: PREVIEW_AUTO_ADVANCE_MS,
     onRun: runEnrollment
   });
+  const runningElapsedMs = useElapsedWhile(gate.isRunning);
 
   if (user?.role !== 'admin') {
     return <div className="forbidden-state" data-testid="forbidden">Accès refusé</div>;
@@ -85,7 +87,11 @@ const FaceEnrollmentPage = () => {
         <p className="page-subtitle" style={{ marginBottom: 'var(--spacing-lg)' }}>
           {gate.isPreviewing
             ? "Assurez-vous que le visage de l'employé est bien visible."
-            : 'Capture en cours...'}
+            : runningElapsedMs > 6000
+              ? "Cela prend plus de temps que prévu. Assurez-vous que l'employé est bien en face de la caméra, avec un bon éclairage."
+              : runningElapsedMs > 2500
+                ? 'Recherche du visage en cours...'
+                : 'Capture en cours...'}
         </p>
 
         {gate.isPreviewing && (

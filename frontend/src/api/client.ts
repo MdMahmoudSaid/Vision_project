@@ -77,10 +77,16 @@ export async function apiClientBlob(endpoint: string, options: RequestInit = {})
 }
 
 export interface ErrorDisplay {
-  type: 'connection-error' | 'failure';
+  type: 'connection-error' | 'failure' | 'no-face';
   title: string;
   message: string;
 }
+
+// Backend error codes meaning "we got frames from the camera, but never a
+// clear enough face" (enrollment: no_face_detected; verification:
+// face_not_detected). These get a distinct, actionable message rather than
+// the generic failure banner, since the fix is simply repositioning.
+const NO_FACE_ERROR_CODES = new Set(['no_face_detected', 'face_not_detected']);
 
 /** Shared mapping from a caught error to a display state, used by every page
  * that shows a result banner, so the connection-error/failure distinction
@@ -89,6 +95,13 @@ export function describeError(err: unknown, failureTitle = 'Erreur'): ErrorDispl
   if (err instanceof ApiError) {
     if (err.status === 0) {
       return { type: 'connection-error', title: 'Erreur de connexion', message: err.message };
+    }
+    if (NO_FACE_ERROR_CODES.has(err.code)) {
+      return {
+        type: 'no-face',
+        title: 'Aucun visage détecté',
+        message: "Assurez-vous que le visage est bien visible, centré et bien éclairé face à la caméra, puis réessayez."
+      };
     }
     return { type: 'failure', title: failureTitle, message: err.message };
   }

@@ -35,7 +35,22 @@ class SPAStaticFiles(StaticFiles):
             raise
 
 
+def _configure_logging() -> None:
+    """Without any configuration, Python only surfaces WARNING+ (via the
+    logging module's built-in "last resort" handler), so the face-detection
+    accept/reject diagnostics (confidence, face-size ratio, landmark
+    geometry) logged at INFO level in face/deepface_engine.py are otherwise
+    invisible in the console — exactly the detail needed to diagnose a
+    reported false accept/reject after the fact. basicConfig() is a no-op if
+    the root logger already has handlers, so this is safe to call once here.
+    """
+    logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("local_attendance").setLevel(logging.INFO)
+
+
 def create_app() -> FastAPI:
+    _configure_logging()
+
     if get_settings().jwt_secret == DEFAULT_JWT_SECRET:
         logger.warning(
             "LOCAL_ATTENDANCE_JWT_SECRET is not set; using the default development secret "

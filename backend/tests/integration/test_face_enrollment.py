@@ -45,17 +45,45 @@ def test_face_reenrollment_replaces_previous_reference_without_deleting_history(
     assert len(attempts) == 1
 
 
-def test_face_enrollment_rejects_unusable_capture(client, admin_auth_headers, db_session, fake_face_engine):
+def test_face_enrollment_rejects_when_no_face_ever_detected(client, admin_auth_headers, db_session, fake_face_engine):
     employee = Employee(full_name="Bad Capture", employee_number="EMP5003")
     db_session.add(employee)
     db_session.commit()
     db_session.refresh(employee)
 
-    fake_face_engine.enroll_usable = False
+    fake_face_engine.enroll_returns_face = False
+
+    response = client.post(f"/employees/{employee.id}/face", headers=admin_auth_headers)
+    assert response.status_code == 400
+    assert response.json()["error"] == "no_face_detected"
+
+    references = db_session.query(FacialReference).filter_by(employee_id=employee.id).all()
+    assert references == []
+
+
+def test_face_enrollment_rejects_camera_hardware_failure(client, admin_auth_headers, db_session, fake_camera):
+    employee = Employee(full_name="Camera Down", employee_number="EMP5004")
+    db_session.add(employee)
+    db_session.commit()
+    db_session.refresh(employee)
+
+    fake_camera.raise_error = True
 
     response = client.post(f"/employees/{employee.id}/face", headers=admin_auth_headers)
     assert response.status_code == 400
     assert response.json()["error"] == "capture_unusable"
 
-    references = db_session.query(FacialReference).filter_by(employee_id=employee.id).all()
-    assert references == []
+
+def test_face_enrollment_retries_past_a_few_bad_samples(client, admin_auth_headers, db_session, fake_face_engine):
+    """A couple of bad frames (no face yet, employee still adjusting) should
+    not fail the whole enrollment — the service retakes the sample instead."""
+    employee = Employee(full_name="Slow To Pose", employee_number="EMP5005")
+    db_session.add(employee)
+    db_session.commit()
+    db_session.refresh(employee)
+
+    fake_face_engine.enroll_fail_first_n_calls = 2
+
+    response = client.post(f"/employees/{employee.id}/face", headers=admin_auth_headers)
+    assert response.status_code == 200
+    assert response.json()["status"] == "usable"

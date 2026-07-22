@@ -10,7 +10,7 @@ from local_attendance.auth.password import hash_password
 from local_attendance.auth.tokens import create_access_token
 from local_attendance.camera.base import CameraBase, CameraCaptureError, CapturedFrame, get_camera
 from local_attendance.database import get_db
-from local_attendance.face.engine import ComparisonResult, EnrollmentResult, FaceEngineBase, get_face_engine
+from local_attendance.face.engine import ComparisonResult, FaceEngineBase, get_face_engine
 from local_attendance.main import app
 from local_attendance.models import Base
 from local_attendance.models.employee import Employee
@@ -56,16 +56,23 @@ class FakeCamera(CameraBase):
 
 class FakeFaceEngine(FaceEngineBase):
     def __init__(self) -> None:
-        self.enroll_usable = True
+        self.enroll_returns_face = True
         self.enroll_embedding = [0.1, 0.2, 0.3]
         self.compare_is_match = True
         self.compare_similarity = 0.9
         self.raise_on_compare = False
+        # When set, the first N calls to enroll_sample() report "no face"
+        # before succeeding, to simulate a few transient bad frames.
+        self.enroll_fail_first_n_calls = 0
+        self._enroll_calls = 0
 
-    def enroll(self, samples: list[CapturedFrame]) -> EnrollmentResult:
-        if not self.enroll_usable:
-            return EnrollmentResult(usable=False, embedding=None, sample_count=0)
-        return EnrollmentResult(usable=True, embedding=self.enroll_embedding, sample_count=len(samples))
+    def enroll_sample(self, frame: CapturedFrame) -> list[float] | None:
+        self._enroll_calls += 1
+        if self._enroll_calls <= self.enroll_fail_first_n_calls:
+            return None
+        if not self.enroll_returns_face:
+            return None
+        return self.enroll_embedding
 
     def compare(self, capture: CapturedFrame, reference_embedding: list[float]) -> ComparisonResult:
         if self.raise_on_compare:

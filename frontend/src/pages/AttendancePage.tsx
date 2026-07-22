@@ -6,6 +6,7 @@ import { ResultBanner } from '../components/ResultBanner';
 import { CameraPreview } from '../components/CameraPreview';
 import { describeError } from '../api/client';
 import { usePreviewGate } from '../hooks/usePreviewGate';
+import { useElapsedWhile } from '../hooks/useElapsedWhile';
 
 const initials = (name: string) =>
   name
@@ -51,6 +52,7 @@ const AttendancePage = () => {
     autoAdvanceMs: PREVIEW_AUTO_ADVANCE_MS,
     onRun: runVerification
   });
+  const runningElapsedMs = useElapsedWhile(gate.isRunning);
 
   if (!employeeId) {
     return <Navigate to="/search" replace />;
@@ -70,7 +72,7 @@ const AttendancePage = () => {
         message={result.message}
         onDone={reset}
         onRetry={
-          result.type === 'connection-error' || result.type === 'failure'
+          result.type === 'connection-error' || result.type === 'failure' || result.type === 'no-face'
             ? () => {
                 setResult(null);
                 gate.reset();
@@ -92,7 +94,11 @@ const AttendancePage = () => {
         <p className="page-subtitle" style={{ marginBottom: 'var(--spacing-lg)' }}>
           {gate.isPreviewing
             ? `Assurez-vous que ${employeeName} est bien visible.`
-            : 'Vérification en cours...'}
+            : runningElapsedMs > 6000
+              ? 'Cela prend plus de temps que prévu. Assurez-vous que la personne est bien en face de la caméra, avec un bon éclairage.'
+              : runningElapsedMs > 2500
+                ? 'Recherche du visage en cours...'
+                : 'Vérification en cours...'}
         </p>
 
         {gate.isPreviewing && (

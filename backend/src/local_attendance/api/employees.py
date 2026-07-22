@@ -18,7 +18,11 @@ from local_attendance.schemas.employee import (
     FaceEnrollmentResponse,
 )
 from local_attendance.services import employee_service
-from local_attendance.services.face_enrollment_service import FaceEnrollmentUnusableError, enroll_face
+from local_attendance.services.face_enrollment_service import (
+    FaceEnrollmentNoFaceError,
+    FaceEnrollmentUnusableError,
+    enroll_face,
+)
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -123,11 +127,12 @@ def update_employee(
 @router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_employee(
     employee_id: str,
+    force: bool = False,
     db: Session = Depends(get_db),
     _: LocalUser = Depends(require_admin),
 ) -> None:
     try:
-        employee_service.delete_employee(db, employee_id)
+        employee_service.delete_employee(db, employee_id, force=force)
     except employee_service.EmployeeNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -167,6 +172,11 @@ def enroll_employee_face(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"error": "capture_unusable", "message": str(exc)},
+        ) from exc
+    except FaceEnrollmentNoFaceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "no_face_detected", "message": str(exc)},
         ) from exc
 
     return FaceEnrollmentResponse(

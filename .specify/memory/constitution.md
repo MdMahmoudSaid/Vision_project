@@ -1,5 +1,24 @@
 <!--
 Sync Impact Report
+Version change: 1.0.0 -> 1.1.0
+Modified principles:
+- II. Verified Presence and Complete Auditability: added a bounded exception
+  allowing an admin to explicitly, permanently delete an employee together
+  with their attendance/verification history via a distinct force-delete
+  action, while keeping the default delete path (and ordinary corrections)
+  non-destructive.
+Added sections: none
+Removed sections: none
+Templates requiring updates:
+- .specify/templates/plan-template.md: validated, no update required
+- .specify/templates/spec-template.md: validated, no update required
+- .specify/templates/tasks-template.md: validated, no update required
+Runtime guidance requiring updates:
+- README.md: validated, no update required
+- docs/plan_pointage_facial.md: source document, no update required
+
+---
+Sync Impact Report (previous)
 Version change: template -> 1.0.0
 Modified principles:
 - Template placeholder principles -> I. Local Attendance Truth and Offline Reliability
@@ -55,6 +74,16 @@ reason, and record who performed the action, when it happened, the previous
 value, and the new value. Timestamps on attendance events and verification
 attempts MUST be precise enough to allow manual cross-checking with the
 client's separate NVR system.
+
+Exception — admin-forced employee deletion: the default employee-deletion path
+MUST refuse to delete an employee who has any attendance events or
+verification attempts, and MUST offer deactivation instead. An authenticated
+admin MAY override this and permanently delete an employee together with all
+of that employee's attendance/verification history, but only via a distinct,
+explicitly-labeled action separate from the normal delete control (never the
+default outcome of a single delete click). This exists for legitimate removal
+needs (e.g. an erroneously created test or duplicate employee) and does not
+weaken the non-destructive requirement for ordinary corrections above.
 
 ### III. Backend-Enforced RBAC and Data Protection
 Authorization MUST be enforced by backend APIs on every protected operation.
@@ -162,4 +191,4 @@ exception MUST be documented in the implementation plan's Complexity Tracking
 section with the rejected simpler alternative and the reason the exception is
 necessary.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-20
+**Version**: 1.1.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-22

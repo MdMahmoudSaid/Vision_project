@@ -118,14 +118,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     delete:
-      summary: Delete an employee with no attendance history
+      summary: Delete an employee, optionally forcing deletion of their history
       description: >
-        Requires local admin role. Refused with 409 if the employee has any
-        verification attempts or attendance events, since that history must
-        remain permanent and auditable — deactivate the employee instead
-        (PATCH active=false) rather than deleting them.
+        Requires local admin role. Without `force`, refused with 409 if the
+        employee has any verification attempts or attendance events, since
+        that history is normally permanent and auditable — deactivate the
+        employee instead (PATCH active=false) rather than deleting them.
+        Passing `force=true` is an explicit admin override that permanently
+        deletes the employee's attendance/verification history along with
+        the employee record.
       parameters:
         - $ref: '#/components/parameters/EmployeeId'
+        - name: force
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
       responses:
         '204':
           description: Employee deleted
@@ -161,7 +170,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/FaceEnrollmentResponse'
         '400':
-          description: Capture unusable
+          description: >
+            Capture unusable (error: capture_unusable, camera/hardware failure)
+            or no clear face could be captured after retries
+            (error: no_face_detected — ask the employee to face the camera
+            directly with good lighting and retry).
           content:
             application/json:
               schema:

@@ -28,6 +28,15 @@ export const employeeManagementHandlers = [
   }),
 
   http.post('/employees/:employee_id/face', async ({ params }) => {
+    if (params.employee_id === 'no-face-emp-id') {
+      return HttpResponse.json(
+        {
+          error: 'no_face_detected',
+          message: "Could not get a clear view of the employee's face."
+        },
+        { status: 400 }
+      );
+    }
     return HttpResponse.json({
       employee_id: params.employee_id as string,
       status: 'usable',
@@ -36,8 +45,11 @@ export const employeeManagementHandlers = [
     });
   }),
 
-  http.delete('/employees/:employee_id', ({ params }) => {
-    if (params.employee_id === 'has-history-id') {
+  http.delete('/employees/:employee_id', ({ params, request }) => {
+    const url = new URL(request.url);
+    const force = url.searchParams.get('force') === 'true';
+
+    if (params.employee_id === 'has-history-id' && !force) {
       return HttpResponse.json(
         {
           error: 'employee_has_history',

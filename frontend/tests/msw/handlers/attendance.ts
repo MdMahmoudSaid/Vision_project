@@ -72,7 +72,7 @@ export const attendanceHandlers = [
 
     if (body.employee_id === 'emp-no-face') {
       return HttpResponse.json(
-        { detail: { error: 'face_not_detected', message: 'No usable face detected in the capture' } },
+        { error: 'face_not_detected', message: 'No usable face detected in the capture' },
         { status: 400 }
       );
     }

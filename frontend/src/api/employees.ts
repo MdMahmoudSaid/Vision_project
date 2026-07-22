@@ -41,11 +41,14 @@ export async function deactivateEmployee(employeeId: string): Promise<EmployeeDe
   });
 }
 
-/** Deletes an employee outright. The backend refuses this (409) if the
- * employee has any attendance/verification history — deactivate them
- * instead in that case (see deactivateEmployee). */
-export async function deleteEmployee(employeeId: string): Promise<void> {
-  return apiClient<void>(`/employees/${employeeId}`, {
+/** Deletes an employee outright. Without `force`, the backend refuses this
+ * (409) if the employee has any attendance/verification history —
+ * deactivate them instead (see deactivateEmployee), or pass `force: true` to
+ * delete the employee AND their history permanently (an explicit admin
+ * override, not the default). */
+export async function deleteEmployee(employeeId: string, force: boolean = false): Promise<void> {
+  const params = force ? '?force=true' : '';
+  return apiClient<void>(`/employees/${employeeId}${params}`, {
     method: 'DELETE'
   });
 }

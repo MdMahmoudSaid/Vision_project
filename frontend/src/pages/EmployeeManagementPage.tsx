@@ -68,16 +68,21 @@ const EmployeeManagementPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, force: boolean = false) => {
     setRowBusyId(id);
     setRowError(null);
     try {
-      await deleteEmployee(id);
+      await deleteEmployee(id, force);
       setConfirmingId(null);
       setEmployees(prev => prev.filter(emp => emp.id !== id));
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setRowError({ id, message: err.message, hasHistory: true });
+        setRowError({
+          id,
+          message: "Cet employé a un historique de présence et ne peut pas être supprimé directement. "
+            + "Vous pouvez le désactiver, ou le supprimer définitivement avec son historique.",
+          hasHistory: true
+        });
       } else {
         setRowError({ id, message: describeError(err, 'Suppression impossible').message, hasHistory: false });
       }
@@ -215,18 +220,24 @@ const EmployeeManagementPage = () => {
             <div className="login-error admin-row-error">
               {rowError.message}
               {rowError.hasHistory && (
-                <>
-                  {' '}
+                <div className="admin-row-actions" style={{ marginTop: 'var(--spacing-sm)' }}>
                   <button
                     type="button"
                     className="row-btn"
-                    style={{ marginLeft: 'var(--spacing-sm)' }}
                     onClick={() => handleDeactivate(emp.id)}
                     disabled={rowBusyId === emp.id}
                   >
                     Désactiver à la place
                   </button>
-                </>
+                  <button
+                    type="button"
+                    className="row-btn row-btn-danger"
+                    onClick={() => handleDelete(emp.id, true)}
+                    disabled={rowBusyId === emp.id}
+                  >
+                    {rowBusyId === emp.id ? 'Suppression...' : 'Supprimer quand même'}
+                  </button>
+                </div>
               )}
             </div>
           )}

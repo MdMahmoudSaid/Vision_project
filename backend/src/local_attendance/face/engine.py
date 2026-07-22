@@ -9,13 +9,6 @@ class FaceEngineError(Exception):
 
 
 @dataclass
-class EnrollmentResult:
-    usable: bool
-    embedding: list[float] | None
-    sample_count: int
-
-
-@dataclass
 class ComparisonResult:
     is_match: bool
     similarity_score: float
@@ -23,8 +16,14 @@ class ComparisonResult:
 
 class FaceEngineBase(ABC):
     @abstractmethod
-    def enroll(self, samples: list[CapturedFrame]) -> EnrollmentResult:
-        """Produce a facial reference embedding from accepted enrollment samples."""
+    def enroll_sample(self, frame: CapturedFrame) -> list[float] | None:
+        """Attempt to produce a facial embedding from a single enrollment frame.
+
+        Returns None (rather than raising) when the frame does not contain a
+        clear, confidently-detected face — callers are expected to discard the
+        frame and capture a fresh one rather than treat a rejected sample as
+        an error.
+        """
         raise NotImplementedError
 
     @abstractmethod

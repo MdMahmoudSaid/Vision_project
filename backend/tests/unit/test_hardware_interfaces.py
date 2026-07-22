@@ -1,7 +1,7 @@
 import pytest
 
 from local_attendance.camera.base import CameraBase, CameraCaptureError, CapturedFrame
-from local_attendance.face.engine import ComparisonResult, EnrollmentResult, FaceEngineBase
+from local_attendance.face.engine import ComparisonResult, FaceEngineBase
 
 
 class FakeCamera(CameraBase):
@@ -24,10 +24,10 @@ class FakeFaceEngine(FaceEngineBase):
         self._similarity = similarity
         self._usable = usable
 
-    def enroll(self, samples: list[CapturedFrame]) -> EnrollmentResult:
+    def enroll_sample(self, frame: CapturedFrame) -> list[float] | None:
         if not self._usable:
-            return EnrollmentResult(usable=False, embedding=None, sample_count=0)
-        return EnrollmentResult(usable=True, embedding=[0.1, 0.2, 0.3], sample_count=len(samples))
+            return None
+        return [0.1, 0.2, 0.3]
 
     def compare(self, capture: CapturedFrame, reference_embedding: list[float]) -> ComparisonResult:
         return ComparisonResult(is_match=self._is_match, similarity_score=self._similarity)
@@ -45,19 +45,16 @@ def test_camera_capture_frame_raises_capture_error():
         camera.capture_frame()
 
 
-def test_face_engine_enroll_usable_samples():
+def test_face_engine_enroll_sample_returns_embedding_for_clear_face():
     engine = FakeFaceEngine(usable=True)
-    result = engine.enroll([CapturedFrame(image="a"), CapturedFrame(image="b")])
-    assert result.usable
-    assert result.sample_count == 2
-    assert result.embedding is not None
+    embedding = engine.enroll_sample(CapturedFrame(image="a"))
+    assert embedding is not None
 
 
-def test_face_engine_enroll_rejects_when_unusable():
+def test_face_engine_enroll_sample_rejects_when_no_face():
     engine = FakeFaceEngine(usable=False)
-    result = engine.enroll([CapturedFrame(image="a")])
-    assert not result.usable
-    assert result.embedding is None
+    embedding = engine.enroll_sample(CapturedFrame(image="a"))
+    assert embedding is None
 
 
 def test_face_engine_compare_reports_match():

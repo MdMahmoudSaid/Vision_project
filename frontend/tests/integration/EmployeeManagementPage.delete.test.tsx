@@ -77,7 +77,7 @@ describe('EmployeeManagementPage delete flow', () => {
     });
   });
 
-  it('offers deactivation fallback when delete is blocked by history (409)', async () => {
+  it('offers deactivation fallback when delete is blocked by history (409), with a French message', async () => {
     renderWithRouter();
 
     await waitFor(() => {
@@ -89,10 +89,32 @@ describe('EmployeeManagementPage delete flow', () => {
     fireEvent.click(within(row).getByRole('button', { name: /confirmer/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/cannot be deleted/i)).toBeInTheDocument();
+      expect(screen.getByText(/historique de présence/i)).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /désactiver à la place/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Has History Employee')).not.toBeInTheDocument();
+    });
+  });
+
+  it('allows the admin to force-delete an employee with history, along with that history', async () => {
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(screen.getByText('Has History Employee')).toBeInTheDocument();
+    });
+
+    const row = screen.getByText('Has History Employee').closest('.admin-row') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: /supprimer/i }));
+    fireEvent.click(within(row).getByRole('button', { name: /confirmer/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/historique de présence/i)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /supprimer quand même/i }));
 
     await waitFor(() => {
       expect(screen.queryByText('Has History Employee')).not.toBeInTheDocument();

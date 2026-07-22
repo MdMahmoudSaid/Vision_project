@@ -98,7 +98,7 @@ def update_employee(db: Session, employee_id: str, payload: EmployeeUpdate) -> E
     return employee
 
 
-def delete_employee(db: Session, employee_id: str) -> None:
+def delete_employee(db: Session, employee_id: str, force: bool = False) -> None:
     employee = get_employee(db, employee_id)
 
     has_history = db.scalar(
@@ -107,10 +107,19 @@ def delete_employee(db: Session, employee_id: str) -> None:
         select(AttendanceEvent.id).where(AttendanceEvent.employee_id == employee_id)
     ) is not None
 
-    if has_history:
+    if has_history and not force:
         raise EmployeeHasHistoryError(
             f"Employee {employee_id} has attendance or verification history and cannot be deleted"
         )
+
+    if has_history:
+        # AttendanceEvent has a FK to VerificationAttempt, so it must go
+        # first. Neither relationship cascades by default (unlike
+        # facial_references) — this is an explicit admin-requested override
+        # of the normal "history is permanent" rule, not something that
+        # should happen implicitly from a plain delete.
+        db.query(AttendanceEvent).filter(AttendanceEvent.employee_id == employee_id).delete()
+        db.query(VerificationAttempt).filter(VerificationAttempt.employee_id == employee_id).delete()
 
     db.delete(employee)
     db.commit()
