@@ -13,3 +13,14 @@ __pycache__/
 *.sqlite3
 *.log
 .DS_Store
+
+# Spec Kit planning artifacts and AI-tooling config: kept on disk for local
+# development but not published to the repository (not needed to run the
+# app; see README.md).
+/specs/
+/.specify/
+/.claude/
+/.agents/
+
+# Superseded by frontend/ (React PWA) — kept on disk, not published.
+/frontend-legacy-expo/
