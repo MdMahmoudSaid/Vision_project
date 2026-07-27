@@ -77,7 +77,7 @@ export async function apiClientBlob(endpoint: string, options: RequestInit = {})
 }
 
 export interface ErrorDisplay {
-  type: 'connection-error' | 'failure' | 'no-face';
+  type: 'connection-error' | 'failure' | 'no-face' | 'spoof';
   title: string;
   message: string;
 }
@@ -95,6 +95,13 @@ export function describeError(err: unknown, failureTitle = 'Erreur'): ErrorDispl
   if (err instanceof ApiError) {
     if (err.status === 0) {
       return { type: 'connection-error', title: 'Erreur de connexion', message: err.message };
+    }
+    if (err.code === 'spoof_detected') {
+      return {
+        type: 'spoof',
+        title: 'Visage non authentifié',
+        message: "La caméra a détecté une photo ou un écran plutôt qu'un visage réel. Présentez-vous directement devant la caméra et réessayez."
+      };
     }
     if (NO_FACE_ERROR_CODES.has(err.code)) {
       return {

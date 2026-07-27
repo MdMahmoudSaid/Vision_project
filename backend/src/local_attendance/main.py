@@ -35,6 +35,9 @@ class SPAStaticFiles(StaticFiles):
             raise
 
 
+_LOG_FILE_HANDLER_NAME = "local_attendance_file_handler"
+
+
 def _configure_logging() -> None:
     """Without any configuration, Python only surfaces WARNING+ (via the
     logging module's built-in "last resort" handler), so the face-detection
@@ -43,9 +46,25 @@ def _configure_logging() -> None:
     invisible in the console — exactly the detail needed to diagnose a
     reported false accept/reject after the fact. basicConfig() is a no-op if
     the root logger already has handlers, so this is safe to call once here.
+
+    Console output alone is lost once the terminal/process is gone, which is
+    exactly when a reported false accept/spoof needs investigating after the
+    fact — so a rotating file handler persists the same INFO-level
+    diagnostics to disk. Guarded by handler name (rather than relying on
+    "only called once") since create_app() runs once per test module import
+    too, and a second call must not attach a second file handle.
     """
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logging.getLogger("local_attendance").setLevel(logging.INFO)
+    app_logger = logging.getLogger("local_attendance")
+    app_logger.setLevel(logging.INFO)
+
+    if not any(getattr(h, "name", None) == _LOG_FILE_HANDLER_NAME for h in app_logger.handlers):
+        from logging.handlers import RotatingFileHandler
+
+        file_handler = RotatingFileHandler("local_attendance.log", maxBytes=5_000_000, backupCount=3)
+        file_handler.name = _LOG_FILE_HANDLER_NAME
+        file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        app_logger.addHandler(file_handler)
 
 
 from contextlib import asynccontextmanager

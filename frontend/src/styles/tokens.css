@@ -649,6 +649,10 @@ a {
 .gate-result--no-face .gate-result-icon,
 .gate-result--no-face .gate-result-title { color: var(--caution); }
 
+.gate-result--spoof { border-top-color: var(--stop); background: linear-gradient(180deg, var(--stop-soft), transparent 55%), var(--surface); }
+.gate-result--spoof .gate-result-icon,
+.gate-result--spoof .gate-result-title { color: var(--stop); }
+
 /* Compact status tag used in shift activity / log rows */
 .status-tag {
   display: inline-flex;

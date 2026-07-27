@@ -21,6 +21,7 @@ _BAD_REQUEST_MESSAGES = {
     "missing_reference": "Employee has no usable facial reference",
     "capture_unusable": "Camera could not capture a usable frame",
     "face_not_detected": "No usable face detected in the capture",
+    "spoof_detected": "Capture rejected: photo or screen detected instead of a live face",
 }
 
 

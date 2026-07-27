@@ -6,6 +6,12 @@ from local_attendance.face.engine import ComparisonResult, FaceEngineBase, FaceE
 logger = logging.getLogger(__name__)
 
 
+class _SpoofRejected(Exception):
+    """Internal signal that DeepFace's liveness check flagged the capture as
+    a photo/screen replay rather than a live face — kept distinct from "no
+    face found" so compare() can surface a specific, actionable reason."""
+
+
 class DeepFaceEngine(FaceEngineBase):
     """Face engine backed by DeepFace, behind the FaceEngineBase interface.
 
@@ -47,9 +53,15 @@ class DeepFaceEngine(FaceEngineBase):
     _MIN_EYE_TO_MOUTH_RATIO = 0.12
     _MAX_EYE_TO_MOUTH_RATIO = 0.65
 
-    def __init__(self, model_name: str = "ArcFace", distance_threshold: float = 4.15) -> None:
+    def __init__(
+        self,
+        model_name: str = "ArcFace",
+        distance_threshold: float = 4.15,
+        anti_spoofing: bool = True,
+    ) -> None:
         self._model_name = model_name
         self._distance_threshold = distance_threshold
+        self._anti_spoofing = anti_spoofing
 
     def _has_plausible_face_geometry(self, area: dict) -> bool:
         left_eye, right_eye = area.get("left_eye"), area.get("right_eye")
@@ -97,6 +109,7 @@ class DeepFaceEngine(FaceEngineBase):
         face-size, and landmark-geometry floors. Returns the raw DeepFace
         result dict, or None if no sufficiently clear face was found."""
         from deepface import DeepFace
+        from deepface.modules.exceptions import SpoofDetected
 
         try:
             represented = DeepFace.represent(
@@ -104,7 +117,11 @@ class DeepFaceEngine(FaceEngineBase):
                 model_name=self._model_name,
                 detector_backend=self._DETECTOR_BACKEND,
                 enforce_detection=True,
+                anti_spoofing=self._anti_spoofing,
             )
+        except SpoofDetected:
+            logger.warning("Liveness check rejected capture as a photo/screen replay")
+            raise _SpoofRejected from None
         except ValueError:
             logger.info("No face region found by the detector at all")
             return None
@@ -139,7 +156,14 @@ class DeepFaceEngine(FaceEngineBase):
         return result
 
     def enroll_sample(self, frame: CapturedFrame) -> list[float] | None:
-        result = self._represent_one(frame.image)
+        try:
+            result = self._represent_one(frame.image)
+        except _SpoofRejected:
+            # Enrollment is admin-supervised and already retries silently on
+            # any rejected sample (see face_enrollment_service.py); treat a
+            # spoofed sample the same as "no face" rather than surfacing a
+            # distinct error for what is just a bad capture in this context.
+            return None
         if result is None:
             return None
         return result["embedding"]
@@ -147,7 +171,13 @@ class DeepFaceEngine(FaceEngineBase):
     def compare(self, capture: CapturedFrame, reference_embedding: list[float]) -> ComparisonResult:
         import numpy as np
 
-        result = self._represent_one(capture.image)
+        try:
+            result = self._represent_one(capture.image)
+        except _SpoofRejected:
+            raise FaceEngineError(
+                "Liveness check rejected the capture (photo/screen replay suspected)",
+                reason="spoof_detected",
+            ) from None
         if result is None:
             raise FaceEngineError("No usable face detected in capture")
 

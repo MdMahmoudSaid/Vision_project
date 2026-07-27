@@ -145,3 +145,33 @@ Still worth re-checking on the actual client PC/camera before go-live:
 enrollment/verification latency under 5 seconds, and face-match accuracy at
 the configured `LOCAL_ATTENDANCE_FACE_MATCH_THRESHOLD` under that site's
 lighting conditions.
+
+## Anti-spoofing (liveness check)
+
+`face/deepface_engine.py` runs DeepFace's built-in passive liveness check
+(MiniFASNet, via the `anti_spoofing` argument to `DeepFace.represent`) on
+every enrollment and verification capture, rejecting a printed photo or a
+phone/tablet screen shown to the camera instead of a live face. Controlled
+by `LOCAL_ATTENDANCE_ANTI_SPOOFING_ENABLED` (default `true`); disable only if
+`torch` cannot be installed in a given environment.
+
+A rejected verification capture surfaces as a distinct `spoof_detected`
+`failure_reason` on the `VerificationAttempt` row (separate from the generic
+`face_not_detected`), so this specific case can be told apart from an
+employee simply standing out of frame when reviewing shift activity or the
+database directly. A rejected enrollment sample is treated the same as any
+other unusable frame — the retry loop in `face_enrollment_service.py` just
+asks for another capture.
+
+The first real use downloads two additional MiniFASNet weight files
+(~2 MB each) to `~/.deepface/weights/`, same one-time-then-offline behavior
+as the ArcFace/RetinaFace weights already described above. Requires `torch`
+(declared in `pyproject.toml`); on a fresh machine, `pip install -e ".[dev]"`
+pulls it in.
+
+This raises the bar against a static photo/screen but is not a substitute
+for reviewing the razor-thin genuine-vs-impostor margin under `Euclidean`
+distance noted in real `verification_attempts` data on this deployment —
+see the project's notes on recalibrating the match threshold or switching to
+a more discriminative distance metric (`euclidean_l2` or `cosine`, both
+already supported by DeepFace) as a still-open follow-up.

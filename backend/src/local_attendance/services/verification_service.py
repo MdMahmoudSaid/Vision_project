@@ -24,6 +24,7 @@ BAD_REQUEST_STATUSES = {
     "missing_reference",
     "capture_unusable",
     "face_not_detected",
+    "spoof_detected",
 }
 
 
@@ -116,10 +117,13 @@ def verify_attendance(
 
     try:
         comparison = face_engine.compare(frame, reference_embedding)
-    except FaceEngineError:
-        attempt = _record_attempt(
-            db, employee, guard, type_requested, VerificationResult.FAILED, failure_reason="face_not_detected"
-        )
+    except FaceEngineError as exc:
+        reason = getattr(exc, "reason", "face_not_detected")
+        attempt = _record_attempt(db, employee, guard, type_requested, VerificationResult.FAILED, failure_reason=reason)
+        if reason == "spoof_detected":
+            return VerificationOutcome(
+                "spoof_detected", attempt, None, "Capture rejected: photo or screen detected instead of a live face"
+            )
         return VerificationOutcome("face_not_detected", attempt, None, "No usable face detected in the capture")
 
     if not comparison.is_match:

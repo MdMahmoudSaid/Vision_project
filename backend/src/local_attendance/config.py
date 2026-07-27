@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     # "euclidean")). Lower distance = more similar; matches are distance <= threshold.
     face_match_threshold: float = 4.15
 
+    # Rejects verification/enrollment captures of a printed photo or a phone/
+    # tablet screen showing someone's face (DeepFace's MiniFASNet-based
+    # passive liveness check) rather than a live person in front of the
+    # camera. Adds a torch-based model load on first use; disable only for
+    # environments where that dependency cannot be installed.
+    anti_spoofing_enabled: bool = True
+
     # Cloud sync settings
     sync_target_url: str = "http://localhost:8001"
     sync_api_key: str = "dev-sync-secret-change-me"

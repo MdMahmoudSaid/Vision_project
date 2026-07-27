@@ -5,7 +5,9 @@ from local_attendance.camera.base import CapturedFrame
 
 
 class FaceEngineError(Exception):
-    pass
+    def __init__(self, message: str, reason: str = "face_not_detected") -> None:
+        super().__init__(message)
+        self.reason = reason
 
 
 @dataclass
@@ -36,4 +38,8 @@ def get_face_engine() -> FaceEngineBase:
     from local_attendance.config import get_settings
     from local_attendance.face.deepface_engine import DeepFaceEngine
 
-    return DeepFaceEngine(distance_threshold=get_settings().face_match_threshold)
+    settings = get_settings()
+    return DeepFaceEngine(
+        distance_threshold=settings.face_match_threshold,
+        anti_spoofing=settings.anti_spoofing_enabled,
+    )

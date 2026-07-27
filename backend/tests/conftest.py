@@ -61,6 +61,7 @@ class FakeFaceEngine(FaceEngineBase):
         self.compare_is_match = True
         self.compare_similarity = 0.9
         self.raise_on_compare = False
+        self.raise_reason = "face_not_detected"
         # When set, the first N calls to enroll_sample() report "no face"
         # before succeeding, to simulate a few transient bad frames.
         self.enroll_fail_first_n_calls = 0
@@ -78,7 +79,7 @@ class FakeFaceEngine(FaceEngineBase):
         if self.raise_on_compare:
             from local_attendance.face.engine import FaceEngineError
 
-            raise FaceEngineError("No usable face detected in capture")
+            raise FaceEngineError("No usable face detected in capture", reason=self.raise_reason)
         return ComparisonResult(is_match=self.compare_is_match, similarity_score=self.compare_similarity)
 
 

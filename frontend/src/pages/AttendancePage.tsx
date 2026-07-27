@@ -72,7 +72,10 @@ const AttendancePage = () => {
         message={result.message}
         onDone={reset}
         onRetry={
-          result.type === 'connection-error' || result.type === 'failure' || result.type === 'no-face'
+          result.type === 'connection-error' ||
+          result.type === 'failure' ||
+          result.type === 'no-face' ||
+          result.type === 'spoof'
             ? () => {
                 setResult(null);
                 gate.reset();
