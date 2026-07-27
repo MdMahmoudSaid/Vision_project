@@ -25,6 +25,19 @@ python scripts/create_owner.py owner@example.com <choose-a-password>
 uvicorn cloud_attendance.main:app --reload --port 8001
 ```
 
+PDF export (`GET /reports/export?format=pdf`) depends on WeasyPrint, which
+needs native Pango/Cairo/GDK-Pixbuf libraries, not just a pip package —
+without them `import weasyprint` raises `OSError` at request time. The
+Dockerfile installs these via `apt-get` for production; for local dev:
+
+```bash
+brew install pango gdk-pixbuf   # macOS; cairo is a transitive dep of pango
+```
+
+(Linux: `apt-get install libpango-1.0-0 libpangocairo-1.0-0 libcairo2
+libgdk-pixbuf2.0-0`.) Excel export (`openpyxl`) has no such requirement and
+works out of the box.
+
 There is no public sign-up endpoint by design (spec Assumptions: "no public
 self-service sign-up"). `scripts/create_owner.py` creates the first Owner
 account; every subsequent cloud user is invited through that Owner via

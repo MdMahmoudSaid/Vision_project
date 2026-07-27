@@ -9,80 +9,65 @@ interface ReportTableProps {
 
 export const ReportTable: React.FC<ReportTableProps> = ({ report, onCorrect }) => {
   return (
-    <div style={{ marginTop: '1.5rem' }}>
+    <div>
       {report.may_be_incomplete && (
-        <div style={{
-          padding: '1rem',
-          backgroundColor: '#fff3cd',
-          color: '#856404',
-          border: '1px solid #ffeeba',
-          borderRadius: '4px',
-          marginBottom: '1rem'
-        }} data-testid="incomplete-warning">
-          <strong>Attention :</strong> La période sélectionnée contient des dates postérieures à la dernière synchronisation connue. Certaines données de présence peuvent être manquantes.
+        <div className="notice notice--caution" data-testid="incomplete-warning">
+          <strong>Attention :</strong> la période sélectionnée contient des dates postérieures à la dernière
+          synchronisation connue. Certaines données de présence peuvent être manquantes.
         </div>
       )}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="report-table">
-        <thead>
-          <tr style={{ background: '#f5f5f5' }}>
-            <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Employé</th>
-            <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Date</th>
-            <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Arrivée</th>
-            <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Départ</th>
-            <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Durée de travail</th>
-            <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Statut</th>
-            {onCorrect && <th style={{ padding: '0.5rem', borderBottom: '2px solid #ccc', textAlign: 'left' }}>Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {report.rows.length === 0 ? (
+      <div className="table-wrap">
+        <table className="data-table" data-testid="report-table">
+          <thead>
             <tr>
-              <td colSpan={onCorrect ? 7 : 6} style={{ textAlign: 'center', padding: '1rem' }}>
-                Aucune donnée à afficher.
-              </td>
+              <th>Employé</th>
+              <th>Date</th>
+              <th>Arrivée</th>
+              <th>Départ</th>
+              <th>Durée de travail</th>
+              <th>Statut</th>
+              {onCorrect && <th>Actions</th>}
             </tr>
-          ) : (
-            report.rows.map((row, idx) => (
-              <tr key={`${row.employee_id}-${row.date}-${idx}`} data-testid="report-row">
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{row.employee_name}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{row.date}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                  {row.arrival_time ? new Date(row.arrival_time).toLocaleTimeString() : '-'}
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                  {row.departure_time ? new Date(row.departure_time).toLocaleTimeString() : '-'}
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                  {row.worked_duration_minutes !== null ? `${row.worked_duration_minutes} min` : '-'}
-                </td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                  <CompletenessBadge status={row.completeness} />
-                  {row.corrected && <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#666' }}>(Corrigé)</span>}
-                </td>
-                {onCorrect && (
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                    <button 
-                      onClick={() => onCorrect(row)} 
-                      data-testid={`correct-btn-${row.employee_id}`}
-                      style={{
-                        padding: '0.2rem 0.5rem',
-                        background: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Corriger
-                    </button>
-                  </td>
-                )}
+          </thead>
+          <tbody>
+            {report.rows.length === 0 ? (
+              <tr className="empty-row">
+                <td colSpan={onCorrect ? 7 : 6}>Aucune donnée à afficher.</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              report.rows.map((row, idx) => (
+                <tr key={`${row.employee_id}-${row.date}-${idx}`} data-testid="report-row">
+                  <td>{row.employee_name}</td>
+                  <td>{row.date}</td>
+                  <td>{row.arrival_time ? new Date(row.arrival_time).toLocaleTimeString() : '-'}</td>
+                  <td>{row.departure_time ? new Date(row.departure_time).toLocaleTimeString() : '-'}</td>
+                  <td>{row.worked_duration_minutes !== null ? `${row.worked_duration_minutes} min` : '-'}</td>
+                  <td>
+                    <CompletenessBadge status={row.completeness} />
+                    {row.corrected && (
+                      <span style={{ marginLeft: '0.5rem', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                        (Corrigé)
+                      </span>
+                    )}
+                  </td>
+                  {onCorrect && (
+                    <td>
+                      <button
+                        onClick={() => onCorrect(row)}
+                        data-testid={`correct-btn-${row.employee_id}`}
+                        className="btn btn-secondary btn-small"
+                      >
+                        Corriger
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

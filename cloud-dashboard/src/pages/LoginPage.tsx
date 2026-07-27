@@ -29,38 +29,43 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '4rem auto', padding: '1rem', border: '1px solid #ccc', borderRadius: '4px' }}>
-      <h1>Cloud Dashboard</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
-          <input 
-            id="email" 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-            style={{ width: '100%', padding: '0.5rem' }} 
-            data-testid="email-input"
-          />
+    <div className="login-shell">
+      <div className="login-card">
+        <div className="login-brand">
+          <span className="topbar-mark" aria-hidden="true" />
+          Pointage Cloud
         </div>
-        <div>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem' }}>Mot de passe</label>
-          <input 
-            id="password" 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-            style={{ width: '100%', padding: '0.5rem' }} 
-            data-testid="password-input"
-          />
-        </div>
-        {error && <div style={{ color: 'red' }} data-testid="error-message">{error}</div>}
-        <button type="submit" disabled={loading} style={{ padding: '0.75rem', cursor: 'pointer' }}>
-          {loading ? 'Connexion...' : 'Se connecter'}
-        </button>
-      </form>
+        <div className="login-eyebrow">Tableau de bord</div>
+
+        <form onSubmit={handleSubmit} className="stack">
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              data-testid="email-input"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Mot de passe</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              data-testid="password-input"
+            />
+          </div>
+          {error && <div className="login-error" data-testid="error-message">{error}</div>}
+          <button type="submit" disabled={loading} className="btn btn-primary btn-medium btn-block">
+            {loading ? 'Connexion...' : 'Se connecter'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

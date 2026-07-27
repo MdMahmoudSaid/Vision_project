@@ -88,60 +88,62 @@ export const EmployeeHistoryPage: React.FC = () => {
   };
 
   if (!id) {
-    return <div>Employé introuvable.</div>;
+    return <div className="empty-state">Employé introuvable.</div>;
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Historique de l'employé</h1>
+    <div>
+      <div className="page-eyebrow">Cloud</div>
+      <h1 className="page-title">Historique de l'employé</h1>
 
-      {loading && <p data-testid="loading-indicator">Chargement...</p>}
-      {error && <div style={{ color: 'red' }} data-testid="error-message">{error}</div>}
+      {loading && <p className="page-subtitle" data-testid="loading-indicator">Chargement...</p>}
+      {error && <div className="notice notice--error" data-testid="error-message">{error}</div>}
 
       {history && (
         <>
-          <h2>{history.employee_name}</h2>
+          <h2 className="page-subtitle" style={{ fontSize: 'var(--text-lg)', color: 'var(--text)', marginBottom: 'var(--spacing-md)' }}>
+            {history.employee_name}
+          </h2>
           {history.may_be_incomplete && (
-            <p data-testid="incomplete-warning" style={{ color: '#b45309' }}>
+            <p className="notice notice--caution" data-testid="incomplete-warning">
               Ces données peuvent être incomplètes (synchronisation en attente).
             </p>
           )}
-          <table data-testid="history-table" style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: '0.5rem' }}>Date</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem' }}>Arrivée</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem' }}>Départ</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem' }}>Statut</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem' }}>Corrigé</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(history.days ?? []).map((day) => (
-                <tr key={day.date} data-testid={`history-row-${day.date}`}>
-                  <td style={{ padding: '0.5rem' }}>{day.date}</td>
-                  <td style={{ padding: '0.5rem' }}>
-                    {day.arrival_time ? new Date(day.arrival_time).toLocaleTimeString() : '—'}
-                  </td>
-                  <td style={{ padding: '0.5rem' }}>
-                    {day.departure_time ? new Date(day.departure_time).toLocaleTimeString() : '—'}
-                  </td>
-                  <td style={{ padding: '0.5rem' }}>{day.completeness}</td>
-                  <td style={{ padding: '0.5rem' }}>{day.corrected ? 'Oui' : 'Non'}</td>
+          <div className="table-wrap" style={{ marginBottom: 'var(--spacing-xl)' }}>
+            <table className="data-table" data-testid="history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Arrivée</th>
+                  <th>Départ</th>
+                  <th>Statut</th>
+                  <th>Corrigé</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(history.days ?? []).map((day) => (
+                  <tr key={day.date} data-testid={`history-row-${day.date}`}>
+                    <td>{day.date}</td>
+                    <td>{day.arrival_time ? new Date(day.arrival_time).toLocaleTimeString() : '—'}</td>
+                    <td>{day.departure_time ? new Date(day.departure_time).toLocaleTimeString() : '—'}</td>
+                    <td>{day.completeness}</td>
+                    <td>{day.corrected ? 'Oui' : 'Non'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
       {canCorrect && (
-        <div style={{ background: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
-          <h3>Ajouter une correction</h3>
-          <form onSubmit={handleSubmitCorrection} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.25rem' }}>Action</label>
+        <div className="card">
+          <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Ajouter une correction</h3>
+          <form onSubmit={handleSubmitCorrection} className="stack" style={{ maxWidth: '420px' }}>
+            <div className="field">
+              <label htmlFor="correction-action">Action</label>
               <select
+                id="correction-action"
                 value={action}
                 onChange={(e) => setAction(e.target.value as CorrectionAction)}
                 data-testid="correction-action-select"
@@ -154,9 +156,10 @@ export const EmployeeHistoryPage: React.FC = () => {
             </div>
 
             {(action === 'correct_time' || action === 'change_type') && (
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem' }}>ID de l'événement</label>
+              <div className="field">
+                <label htmlFor="correction-event-id">ID de l'événement</label>
                 <input
+                  id="correction-event-id"
                   type="text"
                   value={attendanceEventId}
                   onChange={(e) => setAttendanceEventId(e.target.value)}
@@ -167,9 +170,10 @@ export const EmployeeHistoryPage: React.FC = () => {
             )}
 
             {action !== 'change_type' && (
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem' }}>Horodatage</label>
+              <div className="field">
+                <label htmlFor="correction-timestamp">Horodatage</label>
                 <input
+                  id="correction-timestamp"
                   type="datetime-local"
                   value={timestamp}
                   onChange={(e) => setTimestamp(e.target.value)}
@@ -180,9 +184,10 @@ export const EmployeeHistoryPage: React.FC = () => {
             )}
 
             {action === 'change_type' && (
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem' }}>Nouveau type</label>
+              <div className="field">
+                <label htmlFor="correction-type">Nouveau type</label>
                 <select
+                  id="correction-type"
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as 'arrival' | 'departure')}
                   data-testid="correction-type-select"
@@ -193,9 +198,10 @@ export const EmployeeHistoryPage: React.FC = () => {
               </div>
             )}
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.25rem' }}>Raison (obligatoire)</label>
+            <div className="field">
+              <label htmlFor="correction-reason">Raison (obligatoire)</label>
               <input
+                id="correction-reason"
                 type="text"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -204,16 +210,18 @@ export const EmployeeHistoryPage: React.FC = () => {
               />
             </div>
 
-            {formError && <div style={{ color: 'red' }} data-testid="correction-error">{formError}</div>}
+            {formError && <div className="notice notice--error" data-testid="correction-error">{formError}</div>}
 
-            <button type="submit" disabled={submitting} data-testid="correction-submit-btn">
-              {submitting ? 'Enregistrement...' : 'Enregistrer la correction'}
-            </button>
+            <div>
+              <button type="submit" disabled={submitting} className="btn btn-primary btn-medium" data-testid="correction-submit-btn">
+                {submitting ? 'Enregistrement...' : 'Enregistrer la correction'}
+              </button>
+            </div>
           </form>
         </div>
       )}
 
-      <h3>Historique des corrections</h3>
+      <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Historique des corrections</h3>
       <AuditTrailList corrections={corrections} />
     </div>
   );

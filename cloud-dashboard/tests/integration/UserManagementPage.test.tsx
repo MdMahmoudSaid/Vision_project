@@ -79,4 +79,28 @@ describe('UserManagementPage Integration', () => {
       expect(screen.getByTestId('user-row-admin-1')).toHaveTextContent('Révoqué');
     });
   });
+
+  it('deletes a user after confirming', async () => {
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId('delete-btn-admin-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('delete-btn-admin-1'));
+    await waitFor(() => {
+      expect(screen.getByTestId('confirm-delete-admin-1')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('confirm-delete-admin-1'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('user-row-admin-1')).not.toBeInTheDocument();
+    });
+  });
+
+  it('cannot delete its own account', async () => {
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId('delete-btn-owner-1')).toBeDisabled();
+    });
+  });
 });

@@ -47,4 +47,21 @@ export const userHandlers = [
     if (body.active !== undefined) user.active = body.active;
     return HttpResponse.json(user);
   }),
+
+  http.delete('/users/:id', ({ params }) => {
+    const idx = usersStore.findIndex((u) => u.id === params.id);
+    if (idx === -1) {
+      return HttpResponse.json({ error: 'user_not_found', message: 'Cloud user not found' }, { status: 404 });
+    }
+    // Tests render as owner-1 (see UserManagementPage.test.tsx renderApp), so
+    // deleting that id simulates the real backend's self-delete guard.
+    if (params.id === 'owner-1') {
+      return HttpResponse.json(
+        { error: 'cannot_delete_self', message: 'You cannot delete your own account' },
+        { status: 409 }
+      );
+    }
+    usersStore.splice(idx, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];

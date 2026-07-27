@@ -22,3 +22,7 @@ export async function updateUser(userId: string, payload: CloudUserUpdate): Prom
     body: JSON.stringify(payload),
   });
 }
+
+export async function deleteUser(userId: string): Promise<void> {
+  await apiClient<void>(`/users/${userId}`, { method: 'DELETE' });
+}

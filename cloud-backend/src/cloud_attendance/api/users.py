@@ -36,3 +36,12 @@ def update_user(
     _: CloudUser = Depends(require_owner),
 ) -> CloudUser:
     return user_service.update_user(db, user_id, payload)
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: CloudUser = Depends(require_owner),
+) -> None:
+    user_service.delete_user(db, user_id, current_user_id=current_user.id)

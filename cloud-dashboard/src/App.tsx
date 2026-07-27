@@ -1,10 +1,14 @@
 import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { AppRoutes } from './routes';
 import { useSession } from './auth/SessionContext';
+import { useTheme } from './theme/ThemeContext';
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) => (isActive ? 'is-active' : '');
 
 const NavShell: React.FC = () => {
   const { user, logout } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   if (!user) {
@@ -17,18 +21,35 @@ const NavShell: React.FC = () => {
   };
 
   return (
-    <nav className="app-nav">
-      <Link to="/" className="app-nav-brand">Pointage Cloud</Link>
-      <div className="app-nav-links">
-        <Link to="/employees">Employés</Link>
-        <Link to="/reports">Rapports</Link>
-        {user.role === 'owner' && <Link to="/users">Utilisateurs</Link>}
+    <header className="topbar">
+      <div className="topbar-row">
+        <NavLink to="/" className="topbar-brand">
+          <span className="topbar-mark" aria-hidden="true" />
+          Pointage Cloud
+        </NavLink>
+
+        <div className="user-chip">
+          <span className="user-chip-id">
+            <span className="role">{user.role}</span> · {user.email}
+          </span>
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle"
+            aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+          <button onClick={handleLogout} className="logout-btn">Déconnexion</button>
+        </div>
       </div>
-      <div className="app-nav-user">
-        <span>{user.email} ({user.role})</span>
-        <button type="button" onClick={handleLogout}>Déconnexion</button>
-      </div>
-    </nav>
+
+      <nav className="topbar-nav">
+        <NavLink to="/employees" className={navLinkClass}>Employés</NavLink>
+        <NavLink to="/reports" className={navLinkClass}>Rapports</NavLink>
+        {user.role === 'owner' && <NavLink to="/users" className={navLinkClass}>Utilisateurs</NavLink>}
+      </nav>
+    </header>
   );
 };
 
@@ -39,7 +60,7 @@ export const App: React.FC = () => {
   return (
     <div className="app-shell">
       {!isLoginPage && <NavShell />}
-      <main className="app-main">
+      <main className="page">
         <AppRoutes />
       </main>
     </div>

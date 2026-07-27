@@ -6,7 +6,7 @@ import { describeError } from '../api/client';
 
 export const ReportsPage: React.FC = () => {
   const { user } = useSession();
-  
+
   const [type, setType] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
   const [date, setDate] = useState('');
   const [weekStart, setWeekStart] = useState('');
@@ -74,23 +74,18 @@ export const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Générateur de Rapports de Présence</h1>
+    <div>
+      <div className="page-eyebrow">Cloud</div>
+      <h1 className="page-title">Générateur de rapports de présence</h1>
 
-      <form onSubmit={handleGenerate} style={{
-        background: '#f8f9fa',
-        padding: '1.5rem',
-        borderRadius: '8px',
-        marginBottom: '2rem',
-        border: '1px solid #dee2e6'
-      }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Type de rapport</label>
-            <select 
-              value={type} 
+      <form onSubmit={handleGenerate} className="card stack">
+        <div className="filter-row">
+          <div className="field">
+            <label htmlFor="report-type">Type de rapport</label>
+            <select
+              id="report-type"
+              value={type}
               onChange={(e) => setType(e.target.value as any)}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
               data-testid="report-type-select"
             >
               <option value="daily">Quotidien</option>
@@ -101,42 +96,42 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           {type === 'daily' && (
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Date</label>
-              <input 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)} 
-                required 
-                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
+            <div className="field">
+              <label htmlFor="date">Date</label>
+              <input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
                 data-testid="date-input"
               />
             </div>
           )}
 
           {type === 'weekly' && (
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Date de début de semaine</label>
-              <input 
-                type="date" 
-                value={weekStart} 
-                onChange={(e) => setWeekStart(e.target.value)} 
-                required 
-                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
+            <div className="field">
+              <label htmlFor="week-start">Date de début de semaine</label>
+              <input
+                id="week-start"
+                type="date"
+                value={weekStart}
+                onChange={(e) => setWeekStart(e.target.value)}
+                required
                 data-testid="week-start-input"
               />
             </div>
           )}
 
           {type === 'monthly' && (
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Mois (AAAA-MM)</label>
-              <input 
-                type="month" 
-                value={month} 
-                onChange={(e) => setMonth(e.target.value)} 
-                required 
-                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
+            <div className="field">
+              <label htmlFor="month">Mois (AAAA-MM)</label>
+              <input
+                id="month"
+                type="month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                required
                 data-testid="month-input"
               />
             </div>
@@ -144,36 +139,36 @@ export const ReportsPage: React.FC = () => {
 
           {type === 'custom' && (
             <>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Du</label>
-                <input 
-                  type="date" 
-                  value={dateFrom} 
-                  onChange={(e) => setDateFrom(e.target.value)} 
-                  required 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
+              <div className="field">
+                <label htmlFor="date-from">Du</label>
+                <input
+                  id="date-from"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  required
                   data-testid="date-from-input"
                 />
               </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Au</label>
-                <input 
-                  type="date" 
-                  value={dateTo} 
-                  onChange={(e) => setDateTo(e.target.value)} 
-                  required 
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
+              <div className="field">
+                <label htmlFor="date-to">Au</label>
+                <input
+                  id="date-to"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  required
                   data-testid="date-to-input"
                 />
               </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>ID Employé (optionnel)</label>
-                <input 
-                  type="text" 
-                  value={employeeId} 
-                  onChange={(e) => setEmployeeId(e.target.value)} 
+              <div className="field">
+                <label htmlFor="employee-id">ID employé (optionnel)</label>
+                <input
+                  id="employee-id"
+                  type="text"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
                   placeholder="Laisser vide pour toute l'organisation"
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px' }}
                   data-testid="employee-id-input"
                 />
               </div>
@@ -181,55 +176,30 @@ export const ReportsPage: React.FC = () => {
           )}
         </div>
 
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-          data-testid="generate-btn"
-        >
-          {loading ? 'Génération...' : 'Afficher le rapport'}
-        </button>
+        <div>
+          <button type="submit" disabled={loading} className="btn btn-primary btn-medium" data-testid="generate-btn">
+            {loading ? 'Génération...' : 'Afficher le rapport'}
+          </button>
+        </div>
       </form>
 
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }} data-testid="error-message">{error}</div>}
+      {error && <div className="notice notice--error" data-testid="error-message">{error}</div>}
 
       {report && (
         <div>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-            <button 
-              onClick={() => handleExport('pdf')} 
-              data-testid="export-pdf-btn"
-              style={{ padding: '0.5rem 1rem', background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
+          <div className="data-table-actions" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <button onClick={() => handleExport('pdf')} data-testid="export-pdf-btn" className="btn btn-secondary btn-medium">
               Exporter en PDF
             </button>
-            <button 
-              onClick={() => handleExport('xlsx')} 
-              data-testid="export-excel-btn"
-              style={{ padding: '0.5rem 1rem', background: '#17a2b8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
+            <button onClick={() => handleExport('xlsx')} data-testid="export-excel-btn" className="btn btn-secondary btn-medium">
               Exporter en Excel
             </button>
-            <button 
-              onClick={handlePrint} 
-              data-testid="print-btn"
-              style={{ padding: '0.5rem 1rem', background: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
+            <button onClick={handlePrint} data-testid="print-btn" className="btn btn-secondary btn-medium">
               Imprimer
             </button>
           </div>
 
-          <ReportTable 
-            report={report} 
-            onCorrect={canCorrect ? handleCorrect : undefined} 
-          />
+          <ReportTable report={report} onCorrect={canCorrect ? handleCorrect : undefined} />
         </div>
       )}
     </div>

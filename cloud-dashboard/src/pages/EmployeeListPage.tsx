@@ -39,36 +39,39 @@ export const EmployeeListPage: React.FC = () => {
   }, [loadEmployees]);
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Liste des Employés Synchronisés</h1>
-      
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', padding: '1rem', background: '#f5f5f5', borderRadius: '4px' }}>
-        <div>
-          <label style={{ display: 'block' }}>Recherche</label>
-          <input 
-            type="text" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-            placeholder="Nom ou matricule"
-            data-testid="search-input"
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block' }}>Département</label>
-          <input 
-            type="text" 
-            value={department} 
-            onChange={(e) => setDepartment(e.target.value)} 
-            placeholder="Département"
-            data-testid="department-input"
-          />
-        </div>
-        <div>
-          <label style={{ display: 'flex', alignItems: 'center', height: '100%', marginTop: '1rem', gap: '0.5rem' }}>
-            <input 
-              type="checkbox" 
-              checked={activeOnly} 
-              onChange={(e) => setActiveOnly(e.target.checked)} 
+    <div>
+      <div className="page-eyebrow">Cloud</div>
+      <h1 className="page-title">Employés synchronisés</h1>
+
+      <div className="card">
+        <div className="filter-row">
+          <div className="field">
+            <label htmlFor="search">Recherche</label>
+            <input
+              id="search"
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Nom ou matricule"
+              data-testid="search-input"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="department">Département</label>
+            <input
+              id="department"
+              type="text"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              placeholder="Département"
+              data-testid="department-input"
+            />
+          </div>
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={activeOnly}
+              onChange={(e) => setActiveOnly(e.target.checked)}
               data-testid="active-checkbox"
             />
             Actifs uniquement
@@ -76,45 +79,51 @@ export const EmployeeListPage: React.FC = () => {
         </div>
       </div>
 
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }} data-testid="error-message">{error}</div>}
+      {error && <div className="notice notice--error" data-testid="error-message">{error}</div>}
 
       {loading ? (
-        <div data-testid="loading-indicator">Chargement...</div>
+        <p className="page-subtitle" data-testid="loading-indicator">Chargement...</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="employee-table">
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Matricule</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Nom complet</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Département</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Statut</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Visage Enrollé</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Dernière Synchro</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem', borderBottom: '2px solid #ccc' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.length === 0 ? (
+        <div className="table-wrap">
+          <table className="data-table" data-testid="employee-table">
+            <thead>
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '1rem' }}>Aucun employé trouvé.</td>
+                <th>Matricule</th>
+                <th>Nom complet</th>
+                <th>Département</th>
+                <th>Statut</th>
+                <th>Visage enrôlé</th>
+                <th>Dernière synchro</th>
+                <th>Actions</th>
               </tr>
-            ) : (
-              employees.map(emp => (
-                <tr key={emp.id} data-testid={`employee-row-${emp.id}`}>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{emp.employee_number}</td>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{emp.full_name}</td>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{emp.department || '-'}</td>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{emp.active ? 'Actif' : 'Inactif'}</td>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{emp.has_face_reference ? 'Oui' : 'Non'}</td>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>{new Date(emp.synced_at).toLocaleString()}</td>
-                  <td style={{ padding: '0.5rem', borderBottom: '1px solid #eee' }}>
-                    <Link to={`/employees/${emp.id}/history`}>Historique</Link>
-                  </td>
+            </thead>
+            <tbody>
+              {employees.length === 0 ? (
+                <tr className="empty-row">
+                  <td colSpan={7}>Aucun employé trouvé.</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                employees.map(emp => (
+                  <tr key={emp.id} data-testid={`employee-row-${emp.id}`}>
+                    <td>{emp.employee_number}</td>
+                    <td>{emp.full_name}</td>
+                    <td>{emp.department || '-'}</td>
+                    <td>
+                      <span className={`status-tag status-tag--${emp.active ? 'go' : 'neutral'}`}>
+                        {emp.active ? 'Actif' : 'Inactif'}
+                      </span>
+                    </td>
+                    <td>{emp.has_face_reference ? 'Oui' : 'Non'}</td>
+                    <td>{new Date(emp.synced_at).toLocaleString()}</td>
+                    <td>
+                      <Link to={`/employees/${emp.id}/history`}>Historique</Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

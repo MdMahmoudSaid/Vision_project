@@ -1,13 +1,7 @@
 import io
 import os
+import weasyprint
 from jinja2 import Environment, FileSystemLoader
-try:
-    import weasyprint
-except (ImportError, OSError):
-    import sys
-    from unittest.mock import MagicMock
-    weasyprint = MagicMock()
-    sys.modules["weasyprint"] = weasyprint
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
@@ -19,13 +13,10 @@ def generate_pdf_export(report: Report, company_name: str = "Pointage Facial Inc
     templates_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
     env = Environment(loader=FileSystemLoader(templates_dir))
     template = env.get_template("report.html.jinja")
-    
+
     html_content = template.render(report=report, company_name=company_name)
-    
-    pdf_bytes = weasyprint.HTML(string=html_content).write_pdf()
-    if not isinstance(pdf_bytes, (bytes, bytearray)):
-        return b"%PDF-mock-data"
-    return pdf_bytes
+
+    return weasyprint.HTML(string=html_content).write_pdf()
 
 
 def generate_excel_export(report: Report) -> bytes:
