@@ -39,7 +39,15 @@ const AttendancePage = () => {
       if (res.result === 'success') {
         setResult({ type: 'success', title: 'Pointage réussi', message: res.message });
       } else if (res.result === 'failed') {
-        setResult({ type: 'failure', title: 'Échec de la vérification', message: res.message });
+        // The only way a 200 response reaches "failed" is a face mismatch —
+        // every other failure cause (no face, spoof, inactive employee,
+        // missing reference, camera error) is rejected as a 400 before this
+        // point (see verification_service.BAD_REQUEST_STATUSES).
+        setResult({
+          type: 'wrong-face',
+          title: 'Visage non reconnu',
+          message: `Le visage détecté ne correspond pas à celui de ${employeeName}. Vérifiez l'identité de la personne et réessayez.`
+        });
       } else if (res.result === 'duplicate_blocked') {
         setResult({ type: 'duplicate-blocked', title: 'Pointage refusé', message: res.message });
       }
@@ -75,7 +83,8 @@ const AttendancePage = () => {
           result.type === 'connection-error' ||
           result.type === 'failure' ||
           result.type === 'no-face' ||
-          result.type === 'spoof'
+          result.type === 'spoof' ||
+          result.type === 'wrong-face'
             ? () => {
                 setResult(null);
                 gate.reset();

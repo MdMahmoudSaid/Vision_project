@@ -88,6 +88,38 @@ export interface ErrorDisplay {
 // the generic failure banner, since the fix is simply repositioning.
 const NO_FACE_ERROR_CODES = new Set(['no_face_detected', 'face_not_detected']);
 
+// Backend error codes with a French title/message specific to their cause,
+// each reusing the generic 'failure' banner (only no-face/spoof warrant a
+// distinct icon/color today). Keeping this table in one place is what lets
+// every page — pointage, enrollment, employee creation — show a precise
+// message instead of the backend's raw English text.
+const FAILURE_MESSAGES: Record<string, { title: string; message: string }> = {
+  capture_unusable: {
+    title: 'Caméra indisponible',
+    message: "La caméra n'a pas pu capturer une image utilisable. Vérifiez le branchement et l'éclairage, puis réessayez."
+  },
+  employee_inactive: {
+    title: 'Employé inactif',
+    message: 'Cet employé est marqué comme inactif et ne peut pas pointer.'
+  },
+  missing_reference: {
+    title: 'Visage non enregistré',
+    message: "Aucun visage de référence n'est enregistré pour cet employé. Enrôlez-le d'abord."
+  },
+  employee_not_found: {
+    title: 'Employé introuvable',
+    message: "Cet employé n'existe pas ou a été supprimé."
+  },
+  duplicate_employee_number: {
+    title: 'Matricule déjà utilisé',
+    message: 'Ce matricule est déjà attribué à un autre employé.'
+  },
+  invalid_employee_data: {
+    title: 'Données invalides',
+    message: 'Le nom complet ne peut pas être vide.'
+  }
+};
+
 /** Shared mapping from a caught error to a display state, used by every page
  * that shows a result banner, so the connection-error/failure distinction
  * (status 0 vs any other ApiError) is made in exactly one place. */
@@ -109,6 +141,10 @@ export function describeError(err: unknown, failureTitle = 'Erreur'): ErrorDispl
         title: 'Aucun visage détecté',
         message: "Assurez-vous que le visage est bien visible, centré et bien éclairé face à la caméra, puis réessayez."
       };
+    }
+    const knownFailure = FAILURE_MESSAGES[err.code];
+    if (knownFailure) {
+      return { type: 'failure', ...knownFailure };
     }
     return { type: 'failure', title: failureTitle, message: err.message };
   }
