@@ -22,6 +22,7 @@ class Employee(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     registration_date: Mapped[date] = mapped_column(Date, nullable=False, default=today)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    synced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
 
     facial_references: Mapped[list["FacialReference"]] = relationship(  # noqa: F821
         back_populates="employee", cascade="all, delete-orphan"

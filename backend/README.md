@@ -3,10 +3,16 @@
 Local PC service for the facial attendance system: local login, employee
 management, facial enrollment, attendance verification, duplicate blocking,
 and shift activity. This feature is local-first — it does not require
-internet access or a cloud service to record attendance. Cloud sync, reports,
-manual corrections, the guard PWA, HTTPS deployment, and NVR/video
-integration are out of scope here; see
-`specs/001-local-attendance-core/` for the full feature spec.
+internet access or a cloud service to record attendance; the guard workflow
+keeps working even if the cloud is completely unreachable. Reports, manual
+corrections, the guard PWA, HTTPS deployment, and NVR/video integration are
+out of scope here; see `specs/001-local-attendance-core/` for the full
+feature spec.
+
+This service also runs a small background job (`sync/`, added for Feature
+003, `specs/003-cloud-dashboard-sync-reports/`) that pushes newly-recorded
+employees/attendance events/verification attempts up to the cloud backend
+whenever internet access is available — see "Cloud sync" below.
 
 ## Setup
 
@@ -54,7 +60,35 @@ alembic revision --autogenerate -m "description"   # generate a new migration
 Migration `001_local_attendance_core` creates the local schema (employees,
 local_users, facial_references, verification_attempts, attendance_events,
 local_settings). Migration `002_seed_duplicate_window_setting` seeds the
-`duplicate_window_seconds` setting with its default of `60`.
+`duplicate_window_seconds` setting with its default of `60`. A later
+migration adds the `employees.synced` column used by the cloud sync job
+below (`VerificationAttempt.synced` / `AttendanceEvent.synced` already
+existed from `001_local_attendance_core`, in anticipation of this).
+
+## Cloud sync
+
+An in-process background loop (`sync/scheduler.py`, started from `main.py`'s
+FastAPI lifespan) periodically calls `sync/client.py`, which pushes every
+`employees`/`verification_attempts`/`attendance_events` row where
+`synced = False` to the cloud backend's `POST /sync/batch`, then marks them
+`synced = True` only after a 2xx response. If the push fails (cloud
+unreachable, network error), nothing is marked synced, the guard workflow is
+completely unaffected, and the next tick retries with capped exponential
+backoff — see `specs/003-cloud-dashboard-sync-reports/research.md` §3–6 for
+the full idempotency/backoff/credential design.
+
+Relevant settings (`.env`):
+
+```bash
+LOCAL_ATTENDANCE_SYNC_TARGET_URL=http://localhost:8001   # the cloud-backend's URL
+LOCAL_ATTENDANCE_SYNC_API_KEY=dev-sync-secret-change-me  # must match one entry in
+                                                          # cloud-backend's CLOUD_ATTENDANCE_SYNC_API_KEYS
+LOCAL_ATTENDANCE_SYNC_INTERVAL_SECONDS=60
+```
+
+Corrections made on the cloud dashboard never sync back down here — this
+service's data is unaffected by anything done in `cloud-backend/`/
+`cloud-dashboard/` (spec FR-022).
 
 ## Tests
 

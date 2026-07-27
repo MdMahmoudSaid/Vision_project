@@ -93,6 +93,13 @@ def update_employee(db: Session, employee_id: str, payload: EmployeeUpdate) -> E
         if field in update_data:
             setattr(employee, field, update_data[field])
 
+    if update_data:
+        # Any change to a synced employee must be re-pushed to the cloud on
+        # the next sync cycle — without this, edits made after the initial
+        # sync (e.g. deactivation, department change) never reach the cloud
+        # dashboard, since the sync job only looks at rows where synced=False.
+        employee.synced = False
+
     db.commit()
     db.refresh(employee)
     return employee

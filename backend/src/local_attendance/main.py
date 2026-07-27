@@ -48,6 +48,10 @@ def _configure_logging() -> None:
     logging.getLogger("local_attendance").setLevel(logging.INFO)
 
 
+from contextlib import asynccontextmanager
+import asyncio
+from local_attendance.sync.scheduler import sync_loop
+
 def create_app() -> FastAPI:
     _configure_logging()
 
@@ -58,6 +62,18 @@ def create_app() -> FastAPI:
             "has read the repository. Set a real secret in .env before real deployment."
         )
 
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Startup
+        sync_task = asyncio.create_task(sync_loop())
+        yield
+        # Shutdown
+        sync_task.cancel()
+        try:
+            await sync_task
+        except asyncio.CancelledError:
+            pass
+
     app = FastAPI(
         title="Local Attendance Core API",
         version="0.1.0",
@@ -66,6 +82,7 @@ def create_app() -> FastAPI:
             "duplicate blocking, and shift activity. Cloud dashboard, reports, exports, "
             "and manual corrections are outside this feature."
         ),
+        lifespan=lifespan,
     )
 
     @app.exception_handler(HTTPException)

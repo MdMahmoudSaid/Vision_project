@@ -34,6 +34,22 @@ def test_update_employee_changes_fields(client, admin_auth_headers, employee_wit
     assert response.json()["active"] is False
 
 
+def test_update_employee_marks_synced_false_for_resync(client, admin_auth_headers, employee_with_face, db_session):
+    # Simulate the employee having already synced to the cloud once.
+    employee_with_face.synced = True
+    db_session.commit()
+
+    response = client.patch(
+        f"/employees/{employee_with_face.id}",
+        json={"department": "New Department"},
+        headers=admin_auth_headers,
+    )
+    assert response.status_code == 200
+
+    db_session.refresh(employee_with_face)
+    assert employee_with_face.synced is False
+
+
 def test_update_employee_not_found_returns_404(client, admin_auth_headers):
     response = client.patch(
         "/employees/00000000-0000-0000-0000-000000000000",

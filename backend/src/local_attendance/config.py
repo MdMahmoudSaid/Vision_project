@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     # "euclidean")). Lower distance = more similar; matches are distance <= threshold.
     face_match_threshold: float = 4.15
 
+    # Cloud sync settings
+    sync_target_url: str = "http://localhost:8001"
+    sync_api_key: str = "dev-sync-secret-change-me"
+    sync_interval_seconds: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:
